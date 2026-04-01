@@ -290,6 +290,8 @@ fun IronKeyForm(modifier: Modifier = Modifier) {
                         }
                     )
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text("Tamanho da senha ${passwordLength.toInt()}")
 
                     Slider(
@@ -425,11 +427,7 @@ enum class PasswordComplexity(
 ) {
     LOW("Baixo", 6),
     MEDIUM("Médio", 10),
-    HIGH("ALTO", 6)
-}
-
-private infix fun Any.ExposedDropdownMenu(unit: Unit) {
-
+    HIGH("ALTO", 16)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
