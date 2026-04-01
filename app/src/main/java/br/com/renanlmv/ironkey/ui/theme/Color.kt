@@ -15,6 +15,7 @@ val onPrimaryLight = Color(0xFFFFFFFF)
 val backgroundLight = Color(0xFFF4F7FA)
 val onBackgroundLight = Color(0xFF1E3A5F)
 val onSurfaceLight = Color(0xFF2B2B2B)
+
 val primaryDark = Color(0xFFFFA726)
 val onPrimaryDark = Color(0xFF0D1B2A)
 val backgroundDark = Color(0xFF0A0F1C)

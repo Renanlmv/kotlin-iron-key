@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.widget.Space
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,12 +27,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -95,6 +105,18 @@ fun IronKeyForm(modifier: Modifier = Modifier) {
 
     var isPin by remember { mutableStateOf(false) }
 
+    var isEditable by remember { mutableStateOf(false) }
+
+    var passwordLength by remember { mutableStateOf(6f) }
+
+    // variáveis para controlar cada checkbox
+    var includeUppercase by remember { mutableStateOf(false) }
+    var includeLowercase by remember { mutableStateOf(false) }
+    var includeNumbers by remember { mutableStateOf(false) }
+    var includeSymbols by remember { mutableStateOf(false) }
+
+    var passwordComplexity by remember { mutableStateOf(PasswordComplexity.MEDIUM) }
+
     val context = LocalContext.current
 
     // pega o innerpading passado como parametro
@@ -145,6 +167,7 @@ fun IronKeyForm(modifier: Modifier = Modifier) {
 
                 OutlinedTextField(
                     value = generatedPassword,
+                    enabled = isEditable,
                     // toda vez que mudar, a variavel recebe o novo texto
                     onValueChange = {
                         if (it.length <= maxCharacters)
@@ -220,22 +243,135 @@ fun IronKeyForm(modifier: Modifier = Modifier) {
                 // espaco entre o tipo de senha e o botao de gerar senha
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                        val generator = if(isPin) {
-                            PinPasswordGenerator()
-                        } else {
-                            StandardPasswordGenerator()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isEditable) Icons.Default.LockOpen else Icons.Default.Lock,
+                        contentDescription = "Icone do cadeado aberto"
+                    )
+
+                    Text(
+                        "Permitir editar senha?",
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Switch(
+                        checked = isEditable,
+                        onCheckedChange = { isEditable = it }
+                    )
+                }
+
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (isEditable) {
+
+                    Text("Complexidade da senha")
+                    PasswordComplexityDropdown(
+                        selectedComplexity = passwordComplexity,
+                        onComplexitySelected = {
+                            passwordComplexity = it
+                            maxCharacters = passwordComplexity.length
+                        }
+                    )
+
+                    Text("Tamanho da senha ${passwordLength.toInt()}")
+
+                    Slider(
+                        value = passwordLength,
+                        onValueChange = { passwordLength = it },
+                        valueRange = 4.toFloat()..12.toFloat()
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // quadradrinho para selecionar opcoes na composicao da senha
+                            Checkbox(
+                                checked = includeUppercase,
+                                onCheckedChange = { includeUppercase = it }
+                            )
+                            Text("Maiúsculas")
                         }
 
-                        generatedPassword = generator.generate(maxCharacters)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Checkbox(
+                                checked = includeLowercase,
+                                onCheckedChange = { includeLowercase = it }
+                            )
+                            Text("Minúsculas")
+                        }
+                    }
 
-                    }) {
-                    Text("Gerar senha")
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // quadradrinho para selecionar opcoes na composicao da senha
+                            Checkbox(
+                                checked = includeNumbers,
+                                onCheckedChange = { includeNumbers = it }
+                            )
+                            Text("Números")
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Checkbox(
+                                checked = includeSymbols,
+                                onCheckedChange = { includeSymbols = it }
+                            )
+                            Text("Símbolos")
+                        }
+                    }
                 }
             }
+
+
+        }
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+
+                val generator = if (isPin) {
+                    PinPasswordGenerator()
+                } else {
+                    StandardPasswordGenerator(
+                        includeUppercase = includeUppercase,
+                        includeLowercase = includeLowercase,
+                        includeNumbers = includeNumbers,
+                        includeSymbols = includeSymbols
+                    )
+                }
+
+                generatedPassword = generator.generate(maxCharacters)
+
+            }) {
+            Text("Gerar senha")
         }
     }
 }
@@ -280,5 +416,60 @@ class StandardPasswordGenerator(
         return (1..length)
             .map { chars.random() }
             .joinToString("")
+    }
+}
+
+enum class PasswordComplexity(
+    val title: String,
+    val length: Int
+) {
+    LOW("Baixo", 6),
+    MEDIUM("Médio", 10),
+    HIGH("ALTO", 6)
+}
+
+private infix fun Any.ExposedDropdownMenu(unit: Unit) {
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PasswordComplexityDropdown(
+    selectedComplexity: PasswordComplexity,
+    onComplexitySelected: (PasswordComplexity) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Spacer(modifier = Modifier.height(20.dp))
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedComplexity.title,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Complexidade da senha") },
+            trailingIcon = {
+
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            PasswordComplexity.values().forEach { complexity ->
+                DropdownMenuItem(
+                    text = { Text(complexity.title) },
+                    onClick = {
+                        onComplexitySelected(complexity)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
